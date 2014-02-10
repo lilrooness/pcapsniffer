@@ -2,6 +2,7 @@
 #include <pcap.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 #define ETHER_ADD_LEN 6
@@ -92,11 +93,13 @@ void hande_ip(const u_char *packet) {
 
 	int dataLen = ip_packet->ip_len - ip_packet->ip_hl;
 	// u_char *dataBegin = packet + sizeof(struct ether_header) + ip_packet->ip_hl;
+	
+	handle_tcp(packet);
 
 	int i = 0;
 	for(i=0; i<dataLen; i++) {
-		if(isprint(*((packet + sizeof(struct ether_header) + ip_packet->ip_hl) + i))) {
-			printf("%c ", *((packet + sizeof(struct ether_header) + ip_packet->ip_hl) + i));
+		if(isprint(*((packet + sizeof(struct ether_header) + ip_packet->ip_hl + sizeof(struct tcphdr)) + i))) {
+			printf("%c ", *((packet + sizeof(struct ether_header) + ip_packet->ip_hl + sizeof(struct tcphdr)) + i));
 			if(i % 16 == 0 && i > 0) {
 				printf("\n");
 			}
@@ -107,4 +110,9 @@ void hande_ip(const u_char *packet) {
 	printf("\n");
 }
 
+void handle_tcp(const u_char *packet) {
+	struct tcphdr *tcp_packet = (struct tcphdr*) (packet + sizeof(struct ether_header) + sizeof(struct ip));
+	printf("Destination port: %d\n", tcp_packet->th_dport);
+	printf("Source port: %d\n", tcp_packet->th_sport);
+}
 
